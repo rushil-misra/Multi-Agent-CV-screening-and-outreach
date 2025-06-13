@@ -1,0 +1,9 @@
+.env
+myenv
+token files
+client_secret.json
+gSpread_key.json
+__pycache__
+Databases
+Candidate Resumes
+JD.pdf

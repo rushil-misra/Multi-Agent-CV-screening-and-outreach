@@ -1,0 +1,7 @@
+gdown
+python-docx
+langchain_google_genai
+pdfplumber
+dotenv
+langgraph
+google-api-python-client
