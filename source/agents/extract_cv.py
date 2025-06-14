@@ -6,30 +6,19 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List, Dict
 from datetime import datetime,timedelta
-
+import chromadb
+import warnings
 import io
 import contextlib
 
-
 load_dotenv()
-
-
-
-import warnings
 warnings.filterwarnings("ignore", message="CropBox missing from /Page")
 
 
 
-import chromadb
-
-client = chromadb.PersistentClient(path="../Candidate_Database2")
-
-
-collection = client.get_or_create_collection(name="Task")
-
-
-
-
+client = chromadb.PersistentClient(path="../Databases/Candidate_Database")
+corrupt_db = client.get_or_create_collection(name="Corrupt_files")
+valid_db = client.get_or_create_collection(name="Valid_candidates")
 
 
 
@@ -37,16 +26,6 @@ collection = client.get_or_create_collection(name="Task")
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GEMINI_API_KEY"))
 
 
-
-# class Candidate(BaseModel):
-#     """Information about the resume"""
-
-#     name: str = Field(..., description="Name of the Candidate")
-#     language: Dict[str, int] = Field(..., description="Key: job role, Value: duration in months")
-#     education: Dict[str, str] = Field(..., description="Key: institute name, Value: course")
-#     location: str = Field(..., description="State the candidate lives in")
-#     skills: List[str] = Field(..., description="List of skills written by user")
- 
 class Candidate(BaseModel):
     """Information about the resume"""
 
@@ -59,25 +38,6 @@ class Candidate(BaseModel):
 
 
 structured_llm = llm.with_structured_output(Candidate)
-
-
-
-
-
-
-folder_id = "1kDjNAWM4bE_QKpAGd_FPzJY3bhTGPctF"
-
-folder_url = f"https://drive.google.com/drive/folders/{folder_id}"
-
-
-
-def download_cv():
-    if os.path.exists('Candidate Resumes'):
-        pass
-    else:
-        os.system(f"gdown --folder {folder_url}")
-
-    return os.path.join('.\\','Candidate Resumes')
 
 
 
@@ -100,7 +60,7 @@ def load_resume(file_path):
             return extract_text_from_docx(file_path)
     except Exception as e:
         print(f'Error processing file {file_path}')
-        collection.add(
+        corrupt_db.add(
             documents=[os.path.basename(file_path)],
             metadatas=[{"status": "corrupt"}],
             ids=[os.path.basename(file_path)]
@@ -114,7 +74,7 @@ def load_resume(file_path):
 def is_already_processed(filename):
     try:
         print(f"checking existence of {filename}")
-        result = collection.get(ids=[filename])
+        result = valid_db.get(ids=[filename])
         
         if not result['ids']:
             print(f'new file - {filename}')
@@ -180,7 +140,7 @@ RESUME TEXT:
 
             list_of_candidates.append(response.model_dump())
 
-            collection.add(
+            valid_db.add(
             documents=[response.name],
             metadatas=[{"status": "valid",
                         "date" : current_date}],
@@ -190,30 +150,4 @@ RESUME TEXT:
 
 
         return list_of_candidates
-
-
-
-# print(extract_resume(r'C:\Users\Rushil Misra\Documents\projects\Sanskar\Task_1\agents\Candidate Resumes'))
-
-
-# from langgraph.graph import StateGraph, END
-# from langchain_core.runnables import RunnableLambda
-# from functions import extract_resume
-# from functions2 import shortlisting
-# from typing import TypedDict, Annotated,List,Dict
-# from langgraph.graph import add_messages, StateGraph, END
-# from langchain_core.messages import AIMessage, HumanMessage
-
-
-# class agent1_state(TypedDict):
-#     filePath : str
-#     candidate_list : List
-
-
-# graph = StateGraph(agent1_state)
-
-# def agent(state: agent1_state):
-#     return {
-#         "candidate_list": [extract_resume(state["filePath"])], 
-#     }
 

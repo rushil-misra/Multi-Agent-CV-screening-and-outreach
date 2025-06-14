@@ -9,7 +9,7 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("
 
 def connect_sheet(sheet_name):
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name("gSpread_key.json", scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name(r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\gSpread_key.json", scope)
     client = gspread.authorize(creds)
     for spreadsheet in client.openall():
         print(spreadsheet.title)

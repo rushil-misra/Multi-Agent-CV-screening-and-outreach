@@ -72,7 +72,7 @@ folder_url = f"https://drive.google.com/drive/folders/{folder_id}"
 
 
 def download_cv():
-    if os.path.exists('Candidate Resumes'):
+    if os.path.exists(r'C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes'):
         pass
     else:
         os.system(f"gdown --folder {folder_url}")

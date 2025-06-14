@@ -1,4 +1,4 @@
-from functions3 import connect_sheet
+from agents.functions3 import connect_sheet
 
 from gmail.gmail_api import init_gmail_service,send_email
 from pathlib import Path
@@ -20,11 +20,11 @@ def email_shortlist():
             addressees.append(row[3])
 
 
-    client_file = r'..\gmail\client_secret.json'
+    client_file = r'C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\gmail\client_secret.json'
     service = init_gmail_service(client_file)
 
 
-    to_address = "rushilmisra@gmail.com"
+    to_address = "swmonke@gmail.com"
     email_subject = 'Congratulations, You are shortlisted!'
     email_body = "Join this link for meeting ------meeting link------------------"
 
