@@ -28,10 +28,11 @@ class logState(TypedDict):
 def check_CVs(state : logState):
     if os.path.exists(r'C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes'):
         state['Logs'] = f"File already exists in Designated folder "
-        return "CVs are downloaded"
+        return None
     else:
         link = choose_download()
         os.system(f"gdown --folder {folder_url}")
+
 
     return os.path.join('.\\','Candidate Resumes')
 
