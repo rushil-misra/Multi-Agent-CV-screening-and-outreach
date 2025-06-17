@@ -100,4 +100,5 @@ def choose_jd(JD_Db):
     else:
         jd_path = input('enter path of the new job role -- ')
         return extract_qualifications(jd_path)
+    
         
