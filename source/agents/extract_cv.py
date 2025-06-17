@@ -141,7 +141,7 @@ RESUME TEXT:
             list_of_candidates.append(response.model_dump())
 
             valid_db.add(
-            documents=[response.name],
+            documents=[response],
             metadatas=[{"status": "valid",
                         "date" : current_date}],
             ids=[filename]
