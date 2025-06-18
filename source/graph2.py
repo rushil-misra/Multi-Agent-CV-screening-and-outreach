@@ -22,13 +22,13 @@ class JobState(TypedDict):
 
 
 def node_check_cvs(state: JobState):
-    folder = check_CVs(state)  # returns folder path
+    folder = check_CVs(state) 
     state['folder_path'] = folder
     return state
 
 
 def node_choose_jd(state: JobState):
-    jd = choose_jd(JD_db)  # returns dict of qualifications
+    jd = choose_jd(JD_db)  
     state['jd'] = jd
     return state
 
