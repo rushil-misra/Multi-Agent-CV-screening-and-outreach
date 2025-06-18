@@ -52,7 +52,7 @@ def extract_text_from_docx(file_path):
     print (f"opening {file_path} as docx")
     return "\n".join([para.text for para in doc.paragraphs])
 
-def load_resume(file_path):
+def load_resume(file_path,corrupt_db):
     try:
         if file_path.endswith(".pdf"):
             return extract_text_from_pdf(file_path)
@@ -71,7 +71,7 @@ def load_resume(file_path):
 
 
 
-def is_already_processed(filename):
+def is_already_processed(filename,valid_db):
     try:
         print(f"checking existence of {filename}")
         result = valid_db.get(ids=[filename])
@@ -101,7 +101,7 @@ def is_already_processed(filename):
 
 
 
-def extract_resume(folder_path):
+def extract_resume(folder_path,valid_db,corrupt_db):
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     list_of_candidates = []
@@ -111,12 +111,12 @@ def extract_resume(folder_path):
             full_path = os.path.join(folder_path, filename)
 
 
-            if is_already_processed(filename):
+            if is_already_processed(filename,valid_db):
                 print(f"{filename} already processed.")
                 continue
 
 
-            content = load_resume(full_path)
+            content = load_resume(full_path,corrupt_db)
 
             if content is None:
                 continue
@@ -141,7 +141,7 @@ RESUME TEXT:
             list_of_candidates.append(response.model_dump())
 
             valid_db.add(
-            documents=[response],
+            documents=[response.model_dump_json()],
             metadatas=[{"status": "valid",
                         "date" : current_date}],
             ids=[filename]

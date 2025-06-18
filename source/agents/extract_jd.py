@@ -85,17 +85,18 @@ def extract_qualifications(file_path):
     res = res.model_dump()
 
     JD_db.add(
-        id = [res.Job_role],
-        Documents = [res]
+    ids=[res["Job_Role"]],
+    documents=[str(res)]
     )
     return res
 
 def choose_jd(JD_Db):
     existing_job_roles = JD_Db.get(include = ['ids'])
     choose = input(f"These are the existing Job roles in the Database -- \n {existing_job_roles} \n Type 1 to choose existing and 0 to enter a new JD")
-    if choose == 1:
+    if choose == '1':
         option = input('write down the existing job role you choose--')
-        jd = JD_Db.get(id = option, include = ['documents'])
+        jd = JD_Db.get(ids=[option], include=["documents"])
+
         return jd
     else:
         jd_path = input('enter path of the new job role -- ')
