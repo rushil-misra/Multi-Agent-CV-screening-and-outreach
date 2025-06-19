@@ -12,14 +12,16 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GEMINI_API_KEY"))
 
-    
+
+
+
 langsmith_tracing = os.getenv("LANGSMITH_TRACING")
 langsmith_endpoint = os.getenv("LANGSMITH_ENDPOINT")
 langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
 langsmith_project = os.getenv("LANGSMITH_PROJECT")
 
 
-client = chromadb.PersistentClient(path="../Databases/Candidate_Database")
+client = chromadb.PersistentClient(path="../Databases/Candidate_Database1")
 corrupt_db = client.get_or_create_collection(name="Corrupt_files")
 valid_db = client.get_or_create_collection(name="Valid_candidates")
 JD_db = client.get_or_create_collection(name="Job_Descriptions")
@@ -56,6 +58,7 @@ def node_parse_resumes(state: JobState):
     print("="*10,'extracting resumes done',"="*10)
     print(f' current corrupt file database \n {corrupt_db.get()} \n')
     print(f'current valid candaidate database \n {valid_db.get()} \n ')
+    print(f'candidate list -- \n {candidates} \n ')
     return state
 
 
@@ -92,8 +95,8 @@ builder.add_edge("Parse_Resumes", "interview")
 
 graph = builder.compile()
 
-graph.get_graph().print_ascii()
+# graph.get_graph().print_ascii()
 
 
 
-# graph.invoke({"resume_path" : r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes"})
+graph.invoke({"resume_path" : r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes"})
