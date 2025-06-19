@@ -14,7 +14,7 @@ download_path = r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screen
 def check_CVs(state: resumeState):
     if os.path.exists(state['resume_path']):
         print("File already exists in designated folder.")
-        return state
+        return state['resume_path']
     else:
         return Command(
             goto="choose_download"

@@ -53,9 +53,9 @@ def agent_judge(state: interviewState):
         return "continue"
 
     judge_check = llm.invoke([
-        SystemMessage(content="Would you like to continue the interview? Respond only with 'Continue' or 'Make a decision'."),
-        *messages
-    ])
+        SystemMessage(content=f"""Would you like to continue the interview? Respond only with 'Continue' or 'Make a decision'. messages - 
+        {state['messages']}"""
+    )])
 
     if "continue" in judge_check.content.lower():
         return "continue"
@@ -75,6 +75,8 @@ messages :
 ])
 
     state['decision'] = structured_response.model_dump()
+    print(f'Interview logs --- \n {state['messages']} \n')
+
     return "final"
 
 builder = StateGraph(interviewState)
