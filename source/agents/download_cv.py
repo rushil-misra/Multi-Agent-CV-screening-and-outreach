@@ -3,34 +3,30 @@ from typing import List, TypedDict, Annotated
 from langgraph.types import interrupt, Command
 from langgraph.graph import add_messages
 
-class LogState(TypedDict):
-    Logs: Annotated[List[str], add_messages]
+class resumeState(TypedDict):
+    resume_path: str
 
 folder_id = "1kDjNAWM4bE_QKpAGd_FPzJY3bhTGPctF"
 folder_url = f"https://drive.google.com/drive/folders/{folder_id}"
 
 download_path = r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes"
 
-def check_CVs(state: LogState):
-    if os.path.exists(download_path):
-        msg = "File already exists in designated folder."
-        state['Logs'].append(msg)
-        print(msg)
+def check_CVs(state: resumeState):
+    if os.path.exists(state['resume_path']):
+        print("File already exists in designated folder.")
         return state
     else:
         return Command(
             goto="choose_download"
         )
 
-def choose_download(state: LogState):
+def choose_download(state: resumeState):
     value = interrupt(
         {
             "question": "Provide Google Drive Link for the Resumes:"
         }
     )
-    msg = f"User asked to download files from: {value}"
-    state["Logs"].append(msg)
-    print(msg)
+    print(f"User asked to download files from: {value}")
 
     os.system(f"gdown --folder {value}")
 

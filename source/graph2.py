@@ -27,7 +27,10 @@ class JobState(TypedDict):
 
 
 def node_check_cvs(state: JobState):
-    folder = check_CVs(state) 
+    check_cv_input = {
+        'resume_path' : state['resume_path']
+    }
+    folder = check_CVs(check_cv_input) 
     state['folder_path'] = folder
     return state
 
@@ -74,3 +77,4 @@ builder.add_edge("Parse_Resumes", "interview")
 
 graph = builder.compile()
 
+graph.invoke({"resume_path" : r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes"})
