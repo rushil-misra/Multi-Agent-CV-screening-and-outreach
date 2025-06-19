@@ -25,12 +25,16 @@ class interviewState(TypedDict):
 
 def agent_employer(state : interviewState):
     employer_message = (llm.invoke([HumanMessage(content=f'''
-You are an employer interviewing a candidate. your goal is to ask job related question.
+You are an employer interviewing a candidate. your goal is to ask job related questions.
 Ask one question at a time
 Job Qualifications :
 {state['jd']}
 
-Ask suitable questions related to Job Description only
+Ask suitable questions related to Job Description only.
+Below is the chat history till now. 
+
+{state['messages']}
+
 
 
 ''')])).content
@@ -44,6 +48,14 @@ def agent_candidate(state : interviewState):
 You are a candidate giving job interview. Answer the question based on your resume.
 Resume :
 {state['resume']}
+
+Answer Short and precise.
+Below is the chat history till now. 
+
+{state['messages']}
+
+
+
 ''')])).content
     
     state['messages'].append(HumanMessage(content = candidate_message))
@@ -63,13 +75,36 @@ judge_llm = llm.with_structured_output(InterviewDecision)
 
 def agent_judge(state: interviewState):
     messages = state['messages']
+    print(f'length of conversation - {len(messages)}')
 
-    if len(messages) < 3:
+    if (len(messages)-1)//2 < 3:
         print('conversation too short')
         return "resume"
+    elif (len(messages)-1)//2 > 6:
+        structured_response = judge_llm.invoke([
+        HumanMessage(content=f"""
+You are the interviewer. Based on the full conversation, decide whether to Shortlist or Reject the candidate.
+
+Output must follow this structure:
+- status: Shortlisted or Rejected
+- reason: One-line justification
+
+messages : 
+
+{state['messages']}
+""")
+])
+
+        state['decision'] = structured_response.model_dump()
+        # print(f'Interview logs --- \n {state['messages']} \n')
+        print(f'judge made its decision \n {state['decision']}\n')
+
+        return "final"
 
     judge_check = llm.invoke([
-        HumanMessage(content=f"""Would you like to continue the interview? Respond only with 'Resume' or 'Make a decision'. messages - 
+        HumanMessage(content=f"""Would you like to continue the interview?
+                     Try to Make a decision within 6 turns of QnA.
+                     Respond only with 'Resume' or 'Make a decision'. messages - 
         {state['messages']}"""
     )])
 
