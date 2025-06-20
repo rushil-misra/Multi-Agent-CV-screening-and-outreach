@@ -4,10 +4,18 @@ from typing import TypedDict, Annotated,List,Dict
 from langgraph.graph import add_messages, StateGraph, END
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage,BaseMessage
 import os
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.memory import MemorySaver
+from langchain_groq import ChatGroq
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GEMINI_API_KEY"))
+load_dotenv()
+
+
+# os.environ["GROQ_API_KEY"] = os.getenv('GROQ_API_KEY')
+groq_llm = ChatGroq(model = 'meta-llama/llama-4-maverick-17b-128e-instruct')
+
+gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GEMINI_API_KEY"))
 
 memory = MemorySaver()
 
@@ -24,9 +32,11 @@ class interviewState(TypedDict):
 
 
 def agent_employer(state : interviewState):
-    employer_message = (llm.invoke([HumanMessage(content=f'''
+    employer_message = (groq_llm.invoke([HumanMessage(content=f'''
 You are an employer interviewing a candidate. your goal is to ask job related questions.
-Ask one question at a time
+Ask one question at a time.
+Only asks basic questions related to job qualifications. 
+eg . Does your location match?, Do you have the relevant skills, etc
 Job Qualifications :
 {state['jd']}
 
@@ -44,7 +54,7 @@ Below is the chat history till now.
     return state
 
 def agent_candidate(state : interviewState):
-    candidate_message = (llm.invoke([HumanMessage(content=f'''
+    candidate_message = (groq_llm.invoke([HumanMessage(content=f'''
 You are a candidate giving job interview. Answer the question based on your resume.
 Resume :
 {state['resume']}
@@ -70,7 +80,7 @@ class InterviewDecision(BaseModel):
     status: str = Field(..., description="Shortlisted or Rejected")
     reason: str = Field(..., description="Reason for the decision")
 
-judge_llm = llm.with_structured_output(InterviewDecision)
+judge_llm = groq_llm.with_structured_output(InterviewDecision)
 
 
 def agent_judge(state: interviewState):
@@ -101,7 +111,7 @@ messages :
 
         return "final"
 
-    judge_check = llm.invoke([
+    judge_check = groq_llm.invoke([
         HumanMessage(content=f"""Would you like to continue the interview?
                      Try to Make a decision within 6 turns of QnA.
                      Respond only with 'Resume' or 'Make a decision'. messages - 
