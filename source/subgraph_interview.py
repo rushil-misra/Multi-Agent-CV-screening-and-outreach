@@ -91,6 +91,7 @@ def agent_judge(state: interviewState):
         print('conversation too short')
         return "resume"
     elif (len(messages)-1)//2 > 6:
+        print('Conversation Limit Reached')
         structured_response = judge_llm.invoke([
         HumanMessage(content=f"""
 You are the interviewer. Based on the full conversation, decide whether to Shortlist or Reject the candidate.
@@ -170,20 +171,20 @@ interview_config = {"configurable": {
     "thread_id": 1
 }}
 
-interview_subgraph.invoke(
-    {
-        'jd' : {'Job_Role':'Process Excellence & Inventory Lead',
-                'locations':['Gurugram', 'Bhiwandi', 'Bangalore', 'Kolkata'] ,
-                'required_experience':'5' ,
-                'Domain_relevance':['B2B', 'B2C operations', 'WMS/OMS platforms', 'logistics'] ,
-                'Domain_KRA':['Process Excellence', 'inventory management', 'Manpower Planning', 'Warehouse Utilization', 'SOP Implementation', 'Technology Adoption', 'Safety', 'Security', 'Loss Prevention']},
-        'resume' : {"name":"Akshay Bajaj",
-                    "experience":["Senior Manager - Operational Excellence & Inventory Management (Seabird Logisolution Pvt ltd):Present","Apollo Supply chain pvt ltd:Oct,24","Oppo Mobiles India Pvt Ltd:Sep,21","Autoliv India Pvt Ltd:Mar  21","Autoliv India Pvt Ltd:Apr 16","Maruti Suzuki India Ltd:Jun 14"],
-                    "education":["Delhi Institute of Technology Management, MDU:Bachelor of Technology (Mechanical Engineering)"],
-                    "location":"Gurgaon",
-                    "skills":["Six Sigma Green Belt","Lean thinking","Process analysis & optimization","Data Analysis","Project management","Communication & collaboration","Problem solving","Leadership"],
-                    "email":"bajajakshay13@gmail.com"},
-        'messages' : [HumanMessage(content = 'Start the interview')]
-    },
-    config=interview_config
-)
+# interview_subgraph.invoke(
+#     {
+#         'jd' : {'Job_Role':'Process Excellence & Inventory Lead',
+#                 'locations':['Gurugram', 'Bhiwandi', 'Bangalore', 'Kolkata'] ,
+#                 'required_experience':'5' ,
+#                 'Domain_relevance':['B2B', 'B2C operations', 'WMS/OMS platforms', 'logistics'] ,
+#                 'Domain_KRA':['Process Excellence', 'inventory management', 'Manpower Planning', 'Warehouse Utilization', 'SOP Implementation', 'Technology Adoption', 'Safety', 'Security', 'Loss Prevention']},
+#         'resume' : {"name":"Akshay Bajaj",
+#                     "experience":["Senior Manager - Operational Excellence & Inventory Management (Seabird Logisolution Pvt ltd):Present","Apollo Supply chain pvt ltd:Oct,24","Oppo Mobiles India Pvt Ltd:Sep,21","Autoliv India Pvt Ltd:Mar  21","Autoliv India Pvt Ltd:Apr 16","Maruti Suzuki India Ltd:Jun 14"],
+#                     "education":["Delhi Institute of Technology Management, MDU:Bachelor of Technology (Mechanical Engineering)"],
+#                     "location":"Gurgaon",
+#                     "skills":["Six Sigma Green Belt","Lean thinking","Process analysis & optimization","Data Analysis","Project management","Communication & collaboration","Problem solving","Leadership"],
+#                     "email":"bajajakshay13@gmail.com"},
+#         'messages' : [HumanMessage(content = 'Start the interview')]
+#     },
+#     config=interview_config
+# )

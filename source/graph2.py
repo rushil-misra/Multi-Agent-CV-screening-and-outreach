@@ -1,6 +1,8 @@
 from agents.download_cv import check_CVs
 from agents.extract_cv import extract_resume
 from agents.extract_jd import choose_jd
+from agents.functions3 import connect_sheet,push_data_to_sheet
+from agents.functions4 import email_shortlist
 from subgraph_interview import interview_subgraph, interview_config
 import chromadb
 from langgraph.graph import StateGraph, END
@@ -9,6 +11,7 @@ from langgraph.graph import add_messages, StateGraph, END
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.types import interrupt, Command
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -31,7 +34,7 @@ class JobState(TypedDict):
     logs : Annotated[List, add_messages]
     Job_Description : Dict
     candidates: List[Dict]
-    Interview: Dict
+    Interview: List[Dict]
 
 
 def node_check_cvs(state: JobState):
@@ -62,6 +65,17 @@ def node_parse_resumes(state: JobState):
     return state
 
 
+def node_new_candidate(state :JobState):
+    if len(state['candidates']) < 1:
+        print('No new Candidates ')
+        print('='*20)
+        return Command(
+            goto = 'End'
+        )
+        
+    else:
+        return state
+
 def node_interview(state: JobState):
     sub_input = {
         "jd": state["Job_Description"],
@@ -69,11 +83,18 @@ def node_interview(state: JobState):
         "messages": [],
     }
     sub_output = interview_subgraph.invoke(sub_input,config=interview_config)
-    state["Interview"] = sub_output
+    state["Interview"].append(sub_output)
     print("="*10,'interview done',"="*10)
     print(f' result \n {state["Interview"]} \n')
-
     return state
+
+def node_sheet(state : JobState):
+    sheet = connect_sheet("Task_1")
+    push_data_to_sheet(sheet,state['Result_list'])
+    return None
+
+def node_email(state : JobState):
+    return email_shortlist()
 
 
 builder = StateGraph(JobState)
@@ -81,14 +102,25 @@ builder = StateGraph(JobState)
 builder.add_node("Check_CVs", node_check_cvs)
 builder.add_node("Choose_JD", node_choose_jd)
 builder.add_node("Parse_Resumes", node_parse_resumes)
+builder.add_node("check new candidates",node_new_candidate)
 builder.add_node("interview",node_interview)
+builder.add_node('Sheet',node_sheet)
+builder.add_node('Email', node_email)
+builder.add_node('End',END)
 
 
 builder.set_entry_point("Check_CVs")
 
 builder.add_edge("Check_CVs", "Choose_JD")
 builder.add_edge("Choose_JD", "Parse_Resumes")
-builder.add_edge("Parse_Resumes", "interview")
+builder.add_edge("Parse_Resumes", "check new candidates")
+builder.add_edge("check new candidates","interview")
+builder.add_edge("interview", "Sheet")
+builder.add_edge("Sheet", "Email")
+builder.add_edge("Email", "End")
+
+
+
 
 
 

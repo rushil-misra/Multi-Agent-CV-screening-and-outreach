@@ -24,7 +24,7 @@ def summarize_reason(long_reason: str) -> str:
 
 def push_data_to_sheet(sheet, data_list):
     if sheet.row_count == 0 or not sheet.get_all_values():
-        sheet.append_row(["Name", "Status", "Short Reason", "Email","Date"])
+        sheet.append_row(["Name", "Status", "Short Reason", "Email","Date","Contact"])
 
     for entry in data_list:
         long_reason = entry.get("Reason", "")
