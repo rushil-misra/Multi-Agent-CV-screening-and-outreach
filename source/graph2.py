@@ -5,7 +5,6 @@ from agents.functions3 import connect_sheet,push_data_to_sheet
 from agents.functions4 import email_shortlist
 from subgraph_interview import interview_subgraph, interview_config
 import chromadb
-from langgraph.graph import StateGraph, END
 from typing import TypedDict, Annotated,List,Dict
 from langgraph.graph import add_messages, StateGraph, END
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -24,7 +23,7 @@ langsmith_api_key = os.getenv("LANGSMITH_API_KEY")
 langsmith_project = os.getenv("LANGSMITH_PROJECT")
 
 
-client = chromadb.PersistentClient(path="../Databases/Candidate_Database1")
+client = chromadb.PersistentClient(path="../Databases/Candidate_Database2")
 corrupt_db = client.get_or_create_collection(name="Corrupt_files")
 valid_db = client.get_or_create_collection(name="Valid_candidates")
 JD_db = client.get_or_create_collection(name="Job_Descriptions")
@@ -35,6 +34,7 @@ class JobState(TypedDict):
     Job_Description : Dict
     candidates: List[Dict]
     Interview: List[Dict]
+    Result_list: List
 
 
 def node_check_cvs(state: JobState):
@@ -60,7 +60,7 @@ def node_parse_resumes(state: JobState):
     state['candidates'] = candidates
     print("="*10,'extracting resumes done',"="*10)
     print(f' current corrupt file database \n {corrupt_db.get()} \n')
-    print(f'current valid candaidate database \n {valid_db.get()} \n ')
+    print(f'current valid candidate database \n {valid_db.get()} \n ')
     print(f'candidate list -- \n {candidates} \n ')
     return state
 
@@ -77,18 +77,42 @@ def node_new_candidate(state :JobState):
         return state
 
 def node_interview(state: JobState):
+    if len(state['candidates']) < 1:
+        print('ALL CANDIDATES ARE ALREADY PROCESSED')
+        return None
+
+    candidate = state["candidates"][0]
+    
     sub_input = {
         "jd": state["Job_Description"],
-        "resume": state["candidates"][0],
+        "resume": candidate,
         "messages": [],
     }
-    sub_output = interview_subgraph.invoke(sub_input,config=interview_config)
+
+    sub_output = interview_subgraph.invoke(sub_input, config=interview_config)
+    print("sub_output returned:", sub_output)
     state["Interview"].append(sub_output)
-    print("="*10,'interview done',"="*10)
+    print("="*10, 'interview done', "="*10)
     print(f' result \n {state["Interview"]} \n')
+    
+    
+    decision = sub_output.get("decision", {})
+
+    result_row = [
+        candidate.get("name", ""),
+        decision.get("status", ""),
+        decision.get("reason", ""),
+        candidate.get("email", "")
+    ]
+    
+    state["Result_list"].append(result_row)
+
+
     return state
 
+
 def node_sheet(state : JobState):
+    print('RESULT LIST -- \n', state['Interview'], 'Result list new -- \n', state['Result_list'])
     sheet = connect_sheet("Task_1")
     push_data_to_sheet(sheet,state['Result_list'])
     return None
@@ -106,7 +130,7 @@ builder.add_node("check new candidates",node_new_candidate)
 builder.add_node("interview",node_interview)
 builder.add_node('Sheet',node_sheet)
 builder.add_node('Email', node_email)
-builder.add_node('End',END)
+# builder.add_node('END',END)
 
 
 builder.set_entry_point("Check_CVs")
@@ -117,9 +141,9 @@ builder.add_edge("Parse_Resumes", "check new candidates")
 builder.add_edge("check new candidates","interview")
 builder.add_edge("interview", "Sheet")
 builder.add_edge("Sheet", "Email")
-builder.add_edge("Email", "End")
+# builder.add_edge("Email", "END")
 
-
+builder.set_finish_point('Email')
 
 
 
@@ -131,4 +155,7 @@ graph = builder.compile()
 
 
 
-graph.invoke({"resume_path" : r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes"})
+graph.invoke({"resume_path" : r"C:\Users\Rushil Misra\Documents\projects\Multi Agent CV screener\source\Candidate Resumes",
+              "Interview": [],
+              'Result_list': []
+              })

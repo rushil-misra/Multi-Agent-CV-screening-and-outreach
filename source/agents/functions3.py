@@ -23,18 +23,27 @@ def summarize_reason(long_reason: str) -> str:
     return llm.invoke(prompt).content.strip()
 
 def push_data_to_sheet(sheet, data_list):
-    if sheet.row_count == 0 or not sheet.get_all_values():
-        sheet.append_row(["Name", "Status", "Short Reason", "Email","Date","Contact"])
+    existing_values = sheet.get_all_values()
+    if existing_values[0] == '':
+        sheet.append_row(["Name", "Status", "Short Reason", "Email", "Date", "Contact"])
+
 
     for entry in data_list:
-        long_reason = entry.get("Reason", "")
+        long_reason = entry[2]
         short_reason = summarize_reason(long_reason) if long_reason else ""
 
+        # row = [
+        #     entry.get("Name", ""),
+        #     entry.get("Status", ""),
+        #     short_reason,
+        #     entry.get("Email", ""),
+        #     datetime.now().strftime("%Y-%m-%d")
+        # ]
         row = [
-            entry.get("Name", ""),
-            entry.get("Status", ""),
+            entry[0],
+            entry[1],
             short_reason,
-            entry.get("Email", ""),
+            entry[3],
             datetime.now().strftime("%Y-%m-%d")
         ]
         sheet.append_row(row)

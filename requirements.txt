@@ -5,3 +5,5 @@ pdfplumber
 dotenv
 langgraph
 google-api-python-client
+chromadb
+grandalf

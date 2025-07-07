@@ -4,6 +4,8 @@ from typing import TypedDict, Annotated,List,Dict
 from langgraph.graph import add_messages, StateGraph, END
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage,BaseMessage
 import os
+from langgraph.types import interrupt, Command
+
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.memory import MemorySaver
@@ -68,7 +70,7 @@ Below is the chat history till now.
 
 ''')])).content
     
-    state['messages'].append(HumanMessage(content = candidate_message))
+    state['messages'].append(AIMessage(content = candidate_message))
     print('='*10)
     print(state['messages'][-1])
 
@@ -89,7 +91,9 @@ def agent_judge(state: interviewState):
 
     if (len(messages)-1)//2 < 3:
         print('conversation too short')
-        return "resume"
+        return Command(
+            goto = 'employer'
+        )
     elif (len(messages)-1)//2 > 6:
         print('Conversation Limit Reached')
         structured_response = judge_llm.invoke([
@@ -106,11 +110,16 @@ messages :
 """)
 ])
 
-        state['decision'] = structured_response.model_dump()
-        # print(f'Interview logs --- \n {state['messages']} \n')
-        print(f'judge made its decision \n {state['decision']}\n')
+        dec = structured_response.model_dump()
 
-        return "final"
+        # print(f'Interview logs --- \n {state['messages']} \n')
+        print(f'judge made its decision \n {state['messages'][-1]}\n')
+
+        return Command(
+            update= {'decision' : dec},
+            goto = END
+                     
+        )
 
     judge_check = groq_llm.invoke([
         HumanMessage(content=f"""Would you like to continue the interview?
@@ -121,7 +130,9 @@ messages :
 
     if "resume" in judge_check.content.lower():
         print('judge decided to continue')
-        return "resume"
+        return Command (
+            goto = 'employer'
+        )
 
     structured_response = judge_llm.invoke([
         HumanMessage(content=f"""
@@ -136,12 +147,16 @@ messages :
 {state['messages']}
 """)
 ])
+    dec = structured_response.model_dump()
+        # state['decision'] = structured_response.model_dump()
 
-    state['decision'] = structured_response.model_dump()
     # print(f'Interview logs --- \n {state['messages']} \n')
-    print(f'judge made its decision \n {state['decision']}\n')
+    print(f'judge made its decision \n {state['messages'][-1]}\n')
 
-    return "final"
+    return Command(
+        update = {'decision' : dec},
+        goto = END
+    )
 
 builder = StateGraph(interviewState)
 
@@ -153,17 +168,18 @@ builder.add_node("candidate",agent_candidate)
 builder.add_node("judge",agent_judge)
 
 builder.add_edge('employer','candidate')
+builder.add_edge('candidate', 'judge')
 
 builder.set_entry_point('employer')
 
-builder.add_conditional_edges(
-    "candidate",
-    agent_judge,
-    {
-        "resume" : "employer",
-        "final" : END
-    }
-)
+# builder.add_conditional_edges(
+#     "candidate",
+#     agent_judge,
+#     {
+#         "resume" : "employer",
+#         "final" : END
+#     }
+# )
 
 interview_subgraph = builder.compile(checkpointer=memory)
 
